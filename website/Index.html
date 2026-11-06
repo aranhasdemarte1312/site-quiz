@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz & Dashboard</title>
+    <style>
+        :root {
+            --primary-red: #D32F2F;
+            --primary-green: #10B981;
+            --dark-card: #181818;
+            --bg-main: #F4F5F7;
+            --text-white: #FFFFFF;
+            --text-dark: #1F2937;
+            --text-muted: #6B7280;
+            --border-radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Container simulando dispositivo móvel */
+        .app-container {
+            width: 100%;
+            max-width: 400px;
+            height: 720px;
+            background-color: #FFFFFF;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Header */
+        .app-header {
+            background-color: var(--primary-red);
+            color: var(--text-white);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .app-header h1 {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .app-header button {
+            background: none;
+            border: none;
+            color: var(--text-white);
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        /* Conteúdo Principal */
+        .app-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .step-indicator {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--primary-red);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .question-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-dark);
+        }
+
+        /* Lista de Opções */
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .option-item {
+            background-color: var(--dark-card);
+            color: var(--text-white);
+            padding: 16px;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            cursor: pointer;
+            transition: border-color 0.2s, background-color 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .option-item.selected {
+            background-color: var(--primary-green);
+            color: var(--text-white);
+            font-weight: 600;
+        }
+
+        /* Botão Ação Principal */
+        .btn-primary {
+            width: 100%;
+            background-color: var(--primary-green);
+            color: var(--text-white);
+            border: none;
+            padding: 14px;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        /* Footer / Navbar Inferior */
+        .app-footer {
+            background-color: #FFFFFF;
+            border-top: 1px solid #E5E7EB;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: var(--primary-red);
+            font-weight: 600;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            background-color: currentColor;
+            mask-size: cover;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <button>Voltar</button>
+            <h1>Questionário</h1>
+            <button>Ajuda</button>
+        </header>
+
+        <!-- Conteúdo -->
+        <main class="app-content">
+            <div class="step-indicator">1 de 2</div>
+            <h2 class="question-title">Pergunta 1</h2>
+
+            <div class="options-list">
+                <div class="option-item">Resposta 1</div>
+                <div class="option-item selected">Resposta 2</div>
+                <div class="option-item">Resposta 3</div>
+                <div class="option-item">Resposta 4</div>
+            </div>
+
+            <button class="btn-primary">Próxima</button>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="nav-item active">
+                <span>Início</span>
+            </div>
+            <div class="nav-item">
+                <span>Ranking</span>
+            </div>
+            <div class="nav-item">
+                <span>Estudar</span>
+            </div>
+            <div class="nav-item">
+                <span>Perfil</span>
+            </div>
+        </footer>
+    </div>
+
+</body>
+</html>
