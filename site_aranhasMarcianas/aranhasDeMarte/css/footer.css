@@ -1,0 +1,2 @@
+.footer{display:none}
+@media (min-width:768px){.footer{display:block;text-align:center;padding:20px;background:var(--red-deep);color:var(--muted);font-size:.85rem}}

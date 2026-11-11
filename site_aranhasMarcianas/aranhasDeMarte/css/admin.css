@@ -1,0 +1,33 @@
+#app.wide{max-width:900px}
+.admin-grid{display:grid;gap:24px}
+.panel{background:rgba(0,0,0,.22);padding:18px;border-radius:var(--r)}
+.panel h2{font-size:1.1rem;margin-bottom:14px}
+.q-list{list-style:none;padding:0;display:grid;gap:8px}
+.q-item{background:var(--ink);padding:14px 16px;border-radius:var(--r);display:grid;gap:10px}
+.q-item p{font-weight:700}
+.q-item ul{list-style:none;padding:0;display:grid;gap:4px;font-size:.9rem;color:var(--muted)}
+.q-item li.right{color:var(--green);font-weight:700}
+.q-item .row{display:flex;gap:8px}
+.ans{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center}
+.ans input[type=radio]{width:20px;height:20px;accent-color:var(--green)}
+.study-admin{margin-top:40px;padding-top:28px;border-top:1px solid rgba(255,255,255,.28)}
+.study-admin>h2{font-size:1.4rem;margin-bottom:18px}
+.study-manager{display:grid;gap:16px}
+.study-theme-panel,.study-items-panel,.study-form{background:rgba(0,0,0,.22);padding:18px;border-radius:var(--r)}
+.study-items-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+.study-items-heading h3,.study-form h3{font-size:1rem}
+.study-admin-list{list-style:none;padding:0;display:grid;gap:8px}
+.study-admin-list li{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--ink);padding:12px;border-radius:var(--r)}
+.study-admin-list li>span{display:grid;gap:4px;min-width:0}
+.study-admin-list small{color:var(--muted)}
+.study-admin-list .row{display:flex;gap:6px;flex-shrink:0}
+.study-form{margin-top:16px;display:grid;gap:14px}
+.study-form-grid{display:grid;gap:12px}
+.study-form [hidden]{display:none!important}
+.review-editor{border:0;padding:0;display:grid;gap:8px}
+.review-editor legend{font-weight:700;margin-bottom:8px}
+.review-editor-option{display:grid;grid-template-columns:20px minmax(0,1fr);align-items:center;gap:8px}
+.review-editor-option input[type=radio]{accent-color:var(--green)}
+.review-editor-option .field-input{width:100%;min-width:0}
+@media(min-width:700px){.study-manager{grid-template-columns:minmax(240px,.8fr) minmax(0,1.2fr)}.study-form-grid{grid-template-columns:1fr 1fr}}
+@media (min-width:900px){.admin-grid{grid-template-columns:1fr 1fr;align-items:start}}

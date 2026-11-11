@@ -1,0 +1,13 @@
+.donut{--p:0;width:190px;height:190px;border-radius:50%;margin:8px auto 14px;display:grid;place-items:center;
+  background:conic-gradient(var(--green) calc(var(--p)*1%),#fff calc(var(--p)*1%))}
+.donut>div{width:150px;height:150px;border-radius:50%;background:var(--ink);display:grid;place-content:center;text-align:center}
+.donut strong{font-size:2.2rem}
+.donut small{color:var(--muted);font-size:.7rem}
+.legend{display:flex;justify-content:center;gap:18px;list-style:none;padding:0;margin-bottom:18px;font-size:.8rem}
+.legend li:before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+.legend .ok:before{background:var(--green)}.legend .err:before{background:#fff}
+.stat{display:flex;align-items:center;gap:14px;background:var(--ink);padding:14px 16px;border-radius:var(--r);margin-bottom:8px}
+.stat small{display:block;color:var(--muted)}
+.ico{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:800}
+.ico.ok{background:var(--green);color:#04210f}.ico.err{background:var(--red);color:#fff}
+.total{display:flex;justify-content:space-between;margin-top:14px;color:var(--muted)}

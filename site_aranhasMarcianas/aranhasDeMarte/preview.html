@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#b81f1f">
+<title>Aranhas de Marte</title>
+<link rel="icon" type="image/png" href="assets/images/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/buttons.css">
+<link rel="stylesheet" href="css/forms.css">
+<link rel="stylesheet" href="css/header.css">
+<link rel="stylesheet" href="css/footer.css">
+<link rel="stylesheet" href="css/bottom-nav.css">
+<link rel="stylesheet" href="css/quiz.css">
+<link rel="stylesheet" href="css/ranking.css">
+<link rel="stylesheet" href="css/study.css">
+<link rel="stylesheet" href="css/profile.css">
+<link rel="stylesheet" href="css/login.css">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+<div id="header"></div>
+<main id="app" tabindex="-1"></main>
+<div id="footer"></div>
+<div id="bottom-nav"></div>
+<script>
+(() => {
+  const nav = [
+    ["inicio", "Início"], ["perfil", "Perfil"], ["estudos", "Estudos"], ["ranking", "Meu nível"],
+  ];
+  const icons = {
+    inicio: '<path d="M3 11l9-8 9 8M5 10v10h14V10"/>',
+    perfil: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
+    estudos: '<path d="M4 5a2 2 0 012-2h13v17H6a2 2 0 00-2 2zM4 19a2 2 0 012-2h13"/>',
+    ranking: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0zM7 6H4v1a3 3 0 003 3M17 6h3v1a3 3 0 01-3 3"/>',
+  };
+  const defaultQuestions = [
+    { id: 1, q: "Qual instrumento tem teclas pretas e brancas?", o: ["Violino", "Piano", "Flauta", "Bateria"], a: 1 },
+    { id: 2, q: "Qual gênero musical é conhecido pela improvisação e pelo uso frequente de saxofone?", o: ["Blues", "Jazz", "Sertanejo", "Reggae"], a: 1 },
+    { id: 3, q: "Qual instrumento de percussão é presença marcante no samba?", o: ["Agogô", "Pandeiro", "Triângulo", "Atabaque"], a: 1 },
+    { id: 4, q: "Qual gênero costuma destacar guitarra elétrica, baixo e bateria?", o: ["Samba", "Rock", "Bossa nova", "Forró"], a: 1 },
+  ];
+  const defaultStudies = [
+    { id: 101, name: "Gêneros brasileiros", studies: [
+      { id: 1001, type: "text", title: "Samba: ritmo e comunidade", body: "Nascido de encontros de matrizes africanas e brasileiras, o samba reúne canto, dança e percussão. Pandeiro, surdo e tamborim ajudam a criar camadas rítmicas que conversam entre si." },
+      { id: 1002, type: "review", title: "Revisão: samba", question: "Qual instrumento costuma marcar a pulsação grave de uma bateria de escola de samba?", options: ["Surdo", "Flauta", "Violino", "Guitarra"], answer: 0, explanation: "O surdo sustenta a pulsação grave e ajuda a conduzir a bateria." },
+    ] },
+    { id: 102, name: "Rock e suas vertentes", studies: [
+      { id: 2001, type: "text", title: "A linguagem do rock", body: "Guitarra elétrica, baixo e bateria formam uma combinação muito associada ao rock. O gênero abriga muitas vertentes, de arranjos diretos e dançantes a experimentações psicodélicas e progressivas." },
+      { id: 2002, type: "review", title: "Revisão: rock", question: "Qual instrumento costuma conduzir riffs e solos no rock?", options: ["Guitarra elétrica", "Harpa", "Clarinete", "Berimbau"], answer: 0, explanation: "A guitarra elétrica é conhecida pelos riffs e solos, embora o rock tenha muitas formações diferentes." },
+    ] },
+    { id: 103, name: "Instrumentos musicais", studies: [
+      { id: 3001, type: "text", title: "Famílias de instrumentos", body: "Instrumentos podem produzir som por cordas vibrantes, colunas de ar ou superfícies percutidas. Escutar o timbre e observar como o som é produzido ajuda a reconhecer cada família." },
+      { id: 3002, type: "review", title: "Revisão: instrumentos", question: "Qual destes instrumentos pertence à família das madeiras?", options: ["Flauta", "Trompete", "Tímpano", "Violoncelo"], answer: 0, explanation: "A flauta é classificada como instrumento de sopro da família das madeiras." },
+    ] },
+  ];
+  const state = {
+    questions: defaultQuestions,
+    studies: defaultStudies,
+    stats: { ok: 0, err: 0, points: 0 },
+    session: null,
+    last: { ok: 0, err: 0 },
+    quiz: { questions: [], index: 0, picks: [] },
+    editing: null,
+    selectedThemeId: null,
+    adminThemeId: null,
+    adminNewTheme: false,
+    adminStudyEditing: null,
+  };
+  const $ = selector => document.querySelector(selector);
+  const esc = value => String(value).replace(/[&<>"']/g, char => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[char]));
+  const activeTab = route => ["quiz", "fim"].includes(route) ? "inicio" : route;
+
+  function drawHeader(route) {
+    const active = activeTab(route);
+    const links = nav.map(([id, label]) =>
+      `<a href="#${id}" ${active === id ? 'aria-current="page"' : ""}>${label}</a>`).join("");
+    let auth = '<a class="btn green sm" href="#login">Entrar</a>';
+    if (state.session?.role === "admin") {
+      auth = '<a class="btn dark sm" href="#admin">Admin</a><button class="btn outline sm" data-logout>Sair</button>';
+    } else if (state.session) {
+      auth = `<span class="who">${esc(state.session.name)}</span><button class="btn outline sm" data-logout>Sair</button>`;
+    }
+    $("#header").innerHTML = `<header class="topbar">
+      <a class="brand" href="#inicio" aria-label="Aranhas de Marte"><img src="assets/images/logo.png" alt="Aranhas de Marte"></a>
+      <nav class="desktop-nav" aria-label="Principal">${links}</nav><div class="auth">${auth}</div>
+    </header>`;
+    $("#bottom-nav").innerHTML = `<nav class="bottom-nav" aria-label="Principal">${nav.map(([id, label]) =>
+      `<a href="#${id}" ${active === id ? 'aria-current="page"' : ""}><svg viewBox="0 0 24 24" aria-hidden="true">${icons[id]}</svg>${label}</a>`).join("")}</nav>`;
+    $("#footer").innerHTML = `<footer class="footer">© ${new Date().getFullYear()} Aranhas de Marte · Todos os direitos reservados</footer>`;
+  }
+
+  function renderHome() {
+    const total = state.stats.ok + state.stats.err;
+    return `<section class="view"><p class="eyebrow">Boas-vindas</p>
+      <h1>Oi, ${esc(state.session?.name || "Visitante")}</h1>
+      <p class="lead">Explore gêneros, reconheça instrumentos e conquiste seu lugar na trilha sonora.</p>
+      <ul class="info"><li><span>Questionário</span><b>${state.questions.length} perguntas</b></li>
+        <li><span>Desempenho</span><b>${total ? `${state.stats.err} erros, ${state.stats.ok} acertos` : "Sem respostas ainda"}</b></li>
+        <li><span>Sua jornada</span><b>${state.stats.points.toLocaleString("pt-BR")} pontos</b></li></ul>
+      <div class="actions"><button class="btn green" data-start>Começar</button></div></section>`;
+  }
+
+  function renderQuiz() {
+    const quiz = state.quiz;
+    if (!quiz.questions.length) return `<section class="view"><h1>Questionário</h1>
+      <p class="empty">Ainda não há perguntas. Peça ao administrador para cadastrar algumas.</p>
+      <div class="actions"><a class="btn dark" href="#inicio">Voltar</a></div></section>`;
+    const question = quiz.questions[quiz.index];
+    const selected = quiz.picks[quiz.index];
+    const last = quiz.index === quiz.questions.length - 1;
+    return `<section class="view"><p class="eyebrow">${quiz.index + 1} de ${quiz.questions.length}</p>
+      <h1>${esc(question.q)}</h1><div class="options" role="radiogroup">${question.o.map((option, key) =>
+        `<button class="opt ${selected === key ? "sel" : ""}" role="radio" aria-checked="${selected === key}" data-k="${key}">${esc(option)}</button>`).join("")}</div>
+      <div class="actions">${quiz.index ? '<button class="btn dark" data-back>Voltar</button>' : ""}
+        <button class="btn green" data-next ${selected === undefined ? "disabled" : ""}>${last ? "Terminar" : "Próxima"}</button></div></section>`;
+  }
+
+  function renderProfile() {
+    const { ok, err } = state.stats;
+    const total = ok + err;
+    const percent = total ? Math.round(ok / total * 100) : 0;
+    return `<section class="view"><h1>Meu desempenho</h1>
+      ${state.session ? "" : '<p class="lead">Entre na sua conta para acompanhar sua jornada musical.</p>'}
+      <div class="donut" style="--p:${percent}" role="img" aria-label="${percent}% de aproveitamento"><div><strong>${percent}%</strong><small>de aproveitamento</small></div></div>
+      <ul class="legend"><li class="ok">Acertos</li><li class="err">Erros</li></ul>
+      <div class="stat"><i class="ico ok">✓</i><div><b>${ok} acertos</b><small>${percent}% das questões</small></div></div>
+      <div class="stat"><i class="ico err">✕</i><div><b>${err} erros</b><small>${total ? 100 - percent : 0}% das questões</small></div></div>
+      <p class="total">Total de questões <b>${total}</b></p><div class="actions">
+        ${state.session ? "" : '<a class="btn green" href="#login">Entrar</a>'}<button class="btn dark" data-reset>Zerar progresso</button></div></section>`;
+  }
+
+  function renderStudy() {
+    const theme = state.studies.find(item => item.id === state.selectedThemeId);
+    if (!theme) return `<section class="view"><p class="eyebrow">Estudar</p><h1>Escolha um tema</h1>
+      ${state.studies.length ? `<div class="topics">${state.studies.map(item => { const reviewCount = item.studies.filter(study => study.type === "review").length; return `<button class="topic" data-open-theme="${item.id}">
+        <div class="row">${esc(item.name)}<em>${item.studies.length} estudos</em></div>
+        <small>${reviewCount} ${reviewCount === 1 ? "questão" : "questões"} de revisão</small><div class="bar"><i style="width:100%"></i></div></button>`; }).join("")}</div>`
+        : '<p class="empty">Ainda não há temas publicados. O administrador pode adicionar estudos pelo painel.</p>'}</section>`;
+    const typeLabels = { text: "Leitura", video: "Vídeo", image: "Imagem", review: "Revisão" };
+    const content = theme.studies.map(study => {
+      let body = "";
+      if (study.type === "text") body = `<div class="study-copy">${esc(study.body).replace(/\n/g, "<br>")}</div>`;
+      if (study.type === "video") body = study.source
+        ? `<video class="study-video" controls preload="metadata"><source src="${esc(study.source)}">Seu navegador não consegue reproduzir este vídeo.</video>`
+        : '<p class="empty">O vídeo ainda não tem um arquivo associado.</p>';
+      if (study.type === "image") body = study.source
+        ? `<img class="study-image" src="${esc(study.source)}" alt="${esc(study.alt || "")}" loading="lazy">`
+        : '<p class="empty">A imagem ainda não tem um arquivo associado.</p>';
+      if (study.type === "review") body = `<fieldset class="review-question"><legend>${esc(study.question)}</legend>
+        ${study.options.map((option, index) => `<label><input type="radio" name="review-${study.id}" value="${index}"><span>${esc(option)}</span></label>`).join("")}
+        <button class="btn green" type="button" data-check-review="${study.id}" data-answer="${study.answer}" data-explanation="${esc(study.explanation || "")}">Conferir resposta</button>
+        <p class="review-feedback" data-review-feedback="${study.id}" role="status" hidden></p></fieldset>`;
+      return `<article class="study-entry"><p class="study-type">${typeLabels[study.type]}</p><h2>${esc(study.title)}</h2>${body}</article>`;
+    }).join("");
+    return `<section class="view"><p class="eyebrow">Estudar</p><button class="study-back" data-back-themes>← Todos os temas</button>
+      <h1>${esc(theme.name)}</h1>${content ? `<div class="study-content-list">${content}</div>` : '<p class="empty">Este tema ainda não tem estudos.</p>'}</section>`;
+  }
+
+  function renderRanking() {
+    const levels = [
+      { title: "Ouvinte curioso", points: 0 },
+      { title: "Ritmista", points: 520 },
+      { title: "Pop Star", points: 1560 },
+      { title: "Rock Star", points: 3120 },
+      { title: "Lenda da música", points: 5200 },
+    ];
+    const points = state.stats.points;
+    let currentIndex = 0;
+    levels.forEach((level, index) => { if (points >= level.points) currentIndex = index; });
+    const current = levels[currentIndex];
+    const next = levels[currentIndex + 1];
+    const progress = next ? Math.round((points - current.points) / (next.points - current.points) * 100) : 100;
+    const remaining = next ? next.points - points : 0;
+    return `<section class="view"><p class="eyebrow">Sua evolução</p><h1>Sua trilha sonora</h1>
+      <div class="rank-current"><p class="rank-kicker">Seu título atual</p>
+        <div class="rank-title"><span class="rank-note" aria-hidden="true">♪</span><strong>${current.title}</strong></div>
+        <p class="rank-score">${points.toLocaleString("pt-BR")} pontos acumulados</p>
+        ${next ? `<div class="rank-progress-heading"><span>Próximo nível: ${next.title}</span><b>Faltam ${remaining.toLocaleString("pt-BR")} pts</b></div>
+          <div class="rank-track" role="progressbar" aria-label="Progresso até ${next.title}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}"><i style="width:${progress}%"></i></div>
+          <p class="rank-progress-note">Cada acerto vale 260 pontos.</p>`
+          : '<p class="rank-progress-note">Você alcançou o nível máximo. Continue jogando para ampliar sua pontuação.</p>'}
+      </div><h2 class="rank-heading">Faixas da sua jornada</h2><ol class="rank">${levels.map((level, index) => {
+        const status = index < currentIndex ? "is-earned" : index === currentIndex ? "is-current" : "is-locked";
+        return `<li class="${status}" ${index === currentIndex ? 'aria-current="step"' : ""}><span class="pos">${index < currentIndex ? "✓" : index + 1}</span>
+          <span>${level.title}${index === currentIndex ? " · atual" : ""}</span><b>${level.points.toLocaleString("pt-BR")} pts</b></li>`;
+      }).join("")}</ol>
+      <div class="actions"><button class="btn dark" data-go="perfil">Ver desempenho</button><button class="btn green" data-start>Jogar agora</button></div></section>`;
+  }
+
+  function renderLogin() {
+    return `<section class="view"><h1>Entrar</h1><form class="form" novalidate>
+      <label class="field">E-mail<input type="email" name="email" autocomplete="username" required></label>
+      <label class="field">Senha<input type="password" name="pass" autocomplete="current-password" required></label>
+      <div class="form-error" role="alert" hidden></div><div class="actions" style="margin-top:4px"><button class="btn green" type="submit">Entrar</button></div></form>
+      <p class="hint">Prévia sem servidor. Qualquer e-mail com senha de 4+ caracteres entra como jogador. Para visualizar o painel use <b>admin@quiz.com</b> / <b>admin123</b>.</p></section>`;
+  }
+
+  function renderAdmin() {
+    const editing = state.editing;
+    const letters = ["A", "B", "C", "D"];
+    const theme = state.studies.find(item => item.id === state.adminThemeId) || (!state.adminNewTheme ? state.studies[0] : null);
+    const studyEditing = state.adminStudyEditing;
+    const studyTypes = { text: "Texto", video: "Vídeo", image: "Imagem", review: "Revisão" };
+    return `<section class="view"><p class="eyebrow">Administrador</p><h1>Biblioteca musical</h1><div class="admin-grid">
+      <div class="panel"><h2>${editing ? "Editar pergunta do quiz" : "Nova pergunta do quiz"}</h2><form class="form question-form" novalidate>
+        <label class="field">Enunciado<textarea name="q" rows="3" required>${esc(editing?.q || "")}</textarea></label>
+        <fieldset style="border:0;padding:0;display:grid;gap:10px"><legend class="field" style="margin-bottom:8px">Respostas (marque a correta)</legend>
+          ${letters.map((letter, key) => `<div class="ans"><input type="radio" name="a" value="${key}" aria-label="Resposta ${letter} é a correta" ${(editing?.a ?? 0) === key ? "checked" : ""}>
+            <input class="field-input" style="background:var(--ink);border:2px solid transparent;border-radius:var(--r);padding:12px 14px;width:100%" name="o${key}" placeholder="Resposta ${letter}" value="${esc(editing?.o[key] || "")}" required></div>`).join("")}</fieldset>
+        <div class="form-error" role="alert" hidden></div><div class="actions" style="margin-top:0"><button class="btn green" type="submit">${editing ? "Salvar alterações" : "Adicionar"}</button>
+          ${editing ? '<button class="btn dark" type="button" data-cancel>Cancelar</button>' : ""}</div></form></div>
+      <div class="panel"><h2>${state.questions.length} ${state.questions.length === 1 ? "pergunta cadastrada" : "perguntas cadastradas"}</h2>
+        ${state.questions.length ? `<ul class="q-list">${state.questions.map(question => `<li class="q-item"><p>${esc(question.q)}</p><ul>${question.o.map((option, key) =>
+          `<li class="${key === question.a ? "right" : ""}">${letters[key]}. ${esc(option)}${key === question.a ? " ✓" : ""}</li>`).join("")}</ul>
+          <div class="row"><button class="btn dark sm" data-edit="${question.id}">Editar</button><button class="btn danger sm" data-del="${question.id}">Excluir</button></div></li>`).join("")}</ul>`
+          : '<p class="empty">Nenhuma pergunta ainda. Use o formulário para adicionar a primeira.</p>'}</div></div>
+      <section class="study-admin"><p class="eyebrow">Temas e estudos</p><h2>Organize a biblioteca</h2>
+        <div class="study-manager"><div class="study-theme-panel">
+          ${state.studies.length && !state.adminNewTheme ? `<label class="field">Tema selecionado<select class="field-input" data-theme-select>${state.studies.map(item =>
+            `<option value="${item.id}" ${theme?.id === item.id ? "selected" : ""}>${esc(item.name)}</option>`).join("")}</select></label>` : ""}
+          <form class="form theme-form" data-theme-form novalidate><label class="field">${theme ? "Nome do tema" : "Nome do novo tema"}
+            <input class="field-input" type="text" name="themeName" value="${esc(theme?.name || "")}" maxlength="80" required></label>
+            <div class="actions"><button class="btn green" type="submit">${theme ? "Salvar tema" : "Criar tema"}</button>
+              ${theme ? '<button class="btn dark" type="button" data-delete-theme>Excluir tema</button>' : ""}<button class="btn outline" type="button" data-new-theme>Novo tema</button></div></form>
+        </div><div class="study-items-panel">${theme ? `<div class="study-items-heading"><h3>Estudos em ${esc(theme.name)}</h3><button class="btn green sm" type="button" data-new-study>Novo estudo</button></div>
+          ${theme.studies.length ? `<ul class="study-admin-list">${theme.studies.map(study => `<li><span><b>${esc(study.title)}</b><small>${studyTypes[study.type]}</small></span>
+            <div class="row"><button class="btn dark sm" type="button" data-edit-study="${study.id}">Editar</button><button class="btn danger sm" type="button" data-delete-study="${study.id}">Excluir</button></div></li>`).join("")}</ul>`
+            : '<p class="empty">Este tema ainda não tem estudos.</p>'}` : '<p class="empty">Crie um tema para começar a adicionar estudos.</p>'}</div></div>
+        ${theme ? `<form class="form study-form" data-study-form novalidate><h3>${studyEditing ? "Editar estudo" : "Adicionar estudo ao tema"}</h3>
+          <div class="study-form-grid"><label class="field">Título<input class="field-input" type="text" name="studyTitle" value="${esc(studyEditing?.title || "")}" maxlength="120" required></label>
+            <label class="field">Formato<select class="field-input" name="studyType" data-study-type>${Object.entries(studyTypes).map(([type, label]) =>
+              `<option value="${type}" ${(studyEditing?.type || "text") === type ? "selected" : ""}>${label}</option>`).join("")}</select></label></div>
+          <label class="field study-payload" data-study-fields="text" ${studyEditing?.type && studyEditing.type !== "text" ? "hidden" : ""}>Conteúdo do texto<textarea class="field-input" name="studyBody" rows="5">${esc(studyEditing?.body || "")}</textarea></label>
+          <div class="study-payload" data-study-fields="video image" ${["video", "image"].includes(studyEditing?.type) ? "" : "hidden"}><label class="field">URL ou caminho do arquivo
+            <input class="field-input" type="text" name="studySource" value="${esc(studyEditing?.source || "")}" placeholder="assets/images/exemplo.jpg"></label>
+            <label class="field study-payload" data-study-fields="image" ${studyEditing?.type === "image" ? "" : "hidden"}>Texto alternativo da imagem
+              <input class="field-input" type="text" name="studyAlt" value="${esc(studyEditing?.alt || "")}" maxlength="180"></label></div>
+          <div class="study-payload" data-study-fields="review" ${studyEditing?.type === "review" ? "" : "hidden"}><label class="field">Questão da revisão
+            <textarea class="field-input" name="reviewQuestion" rows="2">${esc(studyEditing?.question || "")}</textarea></label>
+            <fieldset class="review-editor"><legend>Alternativas (marque a correta)</legend>${letters.map((letter, key) => `<label class="review-editor-option">
+              <input type="radio" name="reviewAnswer" value="${key}" ${(studyEditing?.answer ?? 0) === key ? "checked" : ""}>
+              <input class="field-input" type="text" name="reviewOption${key}" value="${esc(studyEditing?.options?.[key] || "")}" placeholder="Alternativa ${letter}"></label>`).join("")}</fieldset>
+            <label class="field">Explicação da resposta<textarea class="field-input" name="reviewExplanation" rows="2">${esc(studyEditing?.explanation || "")}</textarea></label></div>
+          <div class="form-error" data-study-error role="alert" hidden></div><div class="actions"><button class="btn green" type="submit">${studyEditing ? "Salvar alterações" : "Adicionar estudo"}</button>
+            ${studyEditing ? '<button class="btn dark" type="button" data-cancel-study>Cancelar</button>' : ""}</div></form>` : ""}
+      </section></section>`;
+  }
+
+  function mount(route) {
+    const root = $("#app");
+    if (route === "estudos") {
+      root.querySelectorAll("[data-open-theme]").forEach(button => button.onclick = () => {
+        state.selectedThemeId = Number(button.dataset.openTheme);
+        draw();
+      });
+      root.querySelector("[data-back-themes]")?.addEventListener("click", () => {
+        state.selectedThemeId = null;
+        draw();
+      });
+      root.querySelectorAll("[data-check-review]").forEach(button => button.onclick = () => {
+        const id = button.dataset.checkReview;
+        const selected = root.querySelector(`input[name="review-${id}"]:checked`);
+        const feedback = root.querySelector(`[data-review-feedback="${id}"]`);
+        if (!selected) {
+          feedback.textContent = "Escolha uma alternativa para conferir.";
+          feedback.classList.remove("is-correct");
+          feedback.classList.add("is-incorrect");
+        } else {
+          const correct = Number(selected.value) === Number(button.dataset.answer);
+          feedback.textContent = correct
+            ? `Resposta correta! ${button.dataset.explanation}`
+            : `Ainda não. Reveja o tema e tente novamente. ${button.dataset.explanation}`;
+          feedback.classList.toggle("is-correct", correct);
+          feedback.classList.toggle("is-incorrect", !correct);
+        }
+        feedback.hidden = false;
+      });
+    }
+    if (route === "quiz") {
+      root.querySelectorAll(".opt").forEach(button => button.onclick = () => {
+        state.quiz.picks[state.quiz.index] = Number(button.dataset.k);
+        draw();
+      });
+      root.querySelector("[data-back]")?.addEventListener("click", () => { state.quiz.index--; draw(); });
+      root.querySelector("[data-next]")?.addEventListener("click", () => {
+        if (state.quiz.index < state.quiz.questions.length - 1) { state.quiz.index++; draw(); return; }
+        const ok = state.quiz.picks.filter((pick, index) => pick === state.quiz.questions[index].a).length;
+        state.last = { ok, err: state.quiz.questions.length - ok };
+        state.stats.ok += state.last.ok;
+        state.stats.err += state.last.err;
+        state.stats.points += state.last.ok * 260;
+        location.hash = "fim";
+      });
+    }
+    root.querySelector("[data-reset]")?.addEventListener("click", () => {
+      if (confirm("Zerar acertos, erros e pontos?")) { state.stats = { ok: 0, err: 0, points: 0 }; draw(); }
+    });
+    if (route === "login") {
+      root.querySelector("form").onsubmit = event => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const email = form.email.value.trim().toLowerCase();
+        const password = form.pass.value;
+        const error = root.querySelector(".form-error");
+        if (!/^\S+@\S+\.\S+$/.test(email) || password.length < 4) {
+          error.textContent = "Digite um e-mail válido e uma senha de pelo menos 4 caracteres.";
+          error.hidden = false;
+          return;
+        }
+        if (email === "admin@quiz.com" && password !== "admin123") {
+          error.textContent = "E-mail ou senha incorretos.";
+          error.hidden = false;
+          return;
+        }
+        const firstName = email.split("@")[0];
+        state.session = email === "admin@quiz.com"
+          ? { name: "Admin", role: "admin" }
+          : { name: firstName[0].toUpperCase() + firstName.slice(1), role: "user" };
+        location.hash = state.session.role === "admin" ? "admin" : "inicio";
+      };
+    }
+    if (route === "admin") {
+      const form = root.querySelector(".question-form");
+      form.onsubmit = event => {
+        event.preventDefault();
+        const question = form.q.value.trim();
+        const options = [0, 1, 2, 3].map(key => form[`o${key}`].value.trim());
+        const error = root.querySelector(".form-error");
+        if (!question || options.some(option => !option)) {
+          error.textContent = "Preencha o enunciado e as 4 respostas.";
+          error.hidden = false;
+          return;
+        }
+        if (state.editing) Object.assign(state.editing, { q: question, o: options, a: Number(form.a.value) });
+        else state.questions.push({ id: Date.now(), q: question, o: options, a: Number(form.a.value) });
+        state.editing = null;
+        draw();
+      };
+      root.querySelector("[data-cancel]")?.addEventListener("click", () => { state.editing = null; draw(); });
+      root.querySelectorAll("[data-edit]").forEach(button => button.onclick = () => {
+        state.editing = state.questions.find(question => question.id === Number(button.dataset.edit));
+        draw();
+      });
+      root.querySelectorAll("[data-del]").forEach(button => button.onclick = () => {
+        if (confirm("Excluir esta pergunta?")) {
+          state.questions = state.questions.filter(question => question.id !== Number(button.dataset.del));
+          state.editing = null;
+          draw();
+        }
+      });
+
+      const themeSelect = root.querySelector("[data-theme-select]");
+      if (themeSelect && state.adminThemeId === null && !state.adminNewTheme) state.adminThemeId = Number(themeSelect.value);
+      themeSelect?.addEventListener("change", () => {
+        state.adminThemeId = Number(themeSelect.value);
+        state.adminNewTheme = false;
+        state.adminStudyEditing = null;
+        draw();
+      });
+      root.querySelector("[data-theme-form]")?.addEventListener("submit", event => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const name = form.themeName.value.trim();
+        if (!name) return;
+        let theme = state.studies.find(item => item.id === state.adminThemeId);
+        if (theme) theme.name = name;
+        else {
+          theme = { id: Date.now(), name, studies: [] };
+          state.studies.push(theme);
+        }
+        state.adminThemeId = theme.id;
+        state.adminNewTheme = false;
+        state.adminStudyEditing = null;
+        draw();
+      });
+      root.querySelector("[data-new-theme]")?.addEventListener("click", () => {
+        state.adminThemeId = null;
+        state.adminNewTheme = true;
+        state.adminStudyEditing = null;
+        draw();
+      });
+      root.querySelector("[data-delete-theme]")?.addEventListener("click", () => {
+        if (!confirm("Excluir este tema e todos os estudos dele?")) return;
+        state.studies = state.studies.filter(item => item.id !== state.adminThemeId);
+        state.adminThemeId = state.studies[0]?.id ?? null;
+        state.adminNewTheme = false;
+        state.adminStudyEditing = null;
+        draw();
+      });
+
+      const studyForm = root.querySelector("[data-study-form]");
+      const typeSelect = studyForm?.querySelector("[data-study-type]");
+      const updateStudyFields = () => {
+        const type = typeSelect.value;
+        studyForm.querySelectorAll("[data-study-fields]").forEach(fields => {
+          fields.hidden = !fields.dataset.studyFields.split(" ").includes(type);
+        });
+      };
+      typeSelect?.addEventListener("change", updateStudyFields);
+      if (typeSelect) updateStudyFields();
+      root.querySelector("[data-new-study]")?.addEventListener("click", () => {
+        state.adminStudyEditing = null;
+        draw();
+      });
+      root.querySelectorAll("[data-edit-study]").forEach(button => button.onclick = () => {
+        const theme = state.studies.find(item => item.id === state.adminThemeId);
+        state.adminStudyEditing = theme?.studies.find(item => item.id === Number(button.dataset.editStudy)) || null;
+        draw();
+      });
+      root.querySelectorAll("[data-delete-study]").forEach(button => button.onclick = () => {
+        if (!confirm("Excluir este estudo?")) return;
+        const theme = state.studies.find(item => item.id === state.adminThemeId);
+        if (theme) theme.studies = theme.studies.filter(study => study.id !== Number(button.dataset.deleteStudy));
+        state.adminStudyEditing = null;
+        draw();
+      });
+      studyForm?.addEventListener("submit", event => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const type = form.studyType.value;
+        const study = { id: state.adminStudyEditing?.id, type, title: form.studyTitle.value.trim() };
+        const error = form.querySelector("[data-study-error]");
+        let message = "";
+        if (!study.title) message = "Informe um título para o estudo.";
+        else if (type === "text") {
+          study.body = form.studyBody.value.trim();
+          if (!study.body) message = "Escreva o conteúdo do estudo.";
+        } else if (type === "video" || type === "image") {
+          study.source = form.studySource.value.trim();
+          study.alt = type === "image" ? form.studyAlt.value.trim() : "";
+          if (!study.source) message = "Informe o caminho ou URL do arquivo.";
+          else if (/^(?:javascript|data):/i.test(study.source) || study.source.startsWith("//")) message = "Use um caminho local ou uma URL HTTP/HTTPS.";
+          else if (type === "image" && !study.alt) message = "Descreva a imagem no texto alternativo.";
+        } else {
+          study.question = form.reviewQuestion.value.trim();
+          study.options = [0, 1, 2, 3].map(index => form[`reviewOption${index}`].value.trim());
+          const answer = form.querySelector('input[name="reviewAnswer"]:checked');
+          study.answer = answer ? Number(answer.value) : -1;
+          study.explanation = form.reviewExplanation.value.trim();
+          if (!study.question || study.options.some(option => !option) || study.answer < 0) message = "Preencha a questão, as quatro alternativas e marque a correta.";
+        }
+        if (message) {
+          error.textContent = message;
+          error.hidden = false;
+          return;
+        }
+        const theme = state.studies.find(item => item.id === state.adminThemeId);
+        if (theme) {
+          if (state.adminStudyEditing) Object.assign(state.adminStudyEditing, study);
+          else {
+            study.id = Date.now();
+            theme.studies.push(study);
+          }
+        }
+        state.adminStudyEditing = null;
+        draw();
+      });
+      root.querySelector("[data-cancel-study]")?.addEventListener("click", () => {
+        state.adminStudyEditing = null;
+        draw();
+      });
+    }
+  }
+
+  function draw() {
+    const route = location.hash.slice(1) || "inicio";
+    if (route === "admin" && state.session?.role !== "admin") { location.hash = "login"; return; }
+    const views = {
+      inicio: renderHome,
+      quiz: renderQuiz,
+      fim: () => `<section class="view"><p class="eyebrow">Fim</p><h1>Obrigado!</h1><ul class="info">
+        <li><span>Acertos</span><b>${state.last.ok}</b></li><li><span>Erros</span><b>${state.last.err}</b></li>
+        <li><span>Pontos</span><b>+${state.last.ok * 260}</b></li></ul><div class="actions">
+        <button class="btn green" data-start>Recomeçar</button><button class="btn outline" data-go="ranking">Ver meu nível</button></div></section>`,
+      perfil: renderProfile,
+      estudos: renderStudy,
+      ranking: renderRanking,
+      login: renderLogin,
+      admin: renderAdmin,
+    };
+    const page = views[route] || renderHome;
+    $("#app").innerHTML = page();
+    $("#app").classList.toggle("wide", route === "admin");
+    drawHeader(route);
+    mount(route);
+    window.scrollTo(0, 0);
+  }
+
+  document.addEventListener("click", event => {
+    const go = event.target.closest("[data-go]");
+    if (go) location.hash = go.dataset.go;
+    if (event.target.closest("[data-start]")) {
+      state.quiz = { questions: [...state.questions], index: 0, picks: [] };
+      location.hash = "quiz";
+    }
+    if (event.target.closest("[data-logout]")) { state.session = null; location.hash = "inicio"; }
+  });
+  window.addEventListener("hashchange", draw);
+  draw();
+})();
+</script>
+</body>
+</html>

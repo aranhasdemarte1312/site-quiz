@@ -1,0 +1,7 @@
+.btn{border:0;cursor:pointer;padding:12px 20px;border-radius:var(--r);font-weight:700;min-height:44px;text-decoration:none;display:inline-flex;align-items:center}
+.btn.green{background:var(--green);color:#04210f}
+.btn.dark{background:var(--ink)}
+.btn.outline{background:transparent;border:2px solid var(--ink)}
+.btn.sm{min-height:36px;padding:6px 14px;font-size:.85rem}
+.btn.danger{background:#fff;color:var(--red-deep)}
+.btn:disabled{opacity:.45;cursor:not-allowed}

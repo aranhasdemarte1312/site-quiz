@@ -1,0 +1,5 @@
+.form{display:grid;gap:14px}
+.field{display:grid;gap:6px;font-weight:600;font-size:.9rem}
+.field input,.field textarea{background:var(--ink);border:2px solid transparent;border-radius:var(--r);padding:12px 14px;width:100%;resize:vertical}
+.field input:focus,.field textarea:focus{outline:0;border-color:var(--green)}
+.form-error{background:#fff;color:var(--red-deep);padding:10px 14px;border-radius:var(--r);font-weight:600}

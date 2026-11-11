@@ -1,0 +1,19 @@
+.rank-current{background:var(--ink);padding:22px;border-radius:var(--r);border-top:4px solid var(--green)}
+.rank-kicker{font-size:.75rem;font-weight:800;text-transform:uppercase;color:var(--muted)}
+.rank-title{display:flex;align-items:center;gap:12px;margin:6px 0}
+.rank-title strong{font-size:1.55rem;line-height:1.2}
+.rank-note{font-size:2rem;color:var(--green);line-height:1}
+.rank-score,.rank-progress-note{color:var(--muted);font-size:.9rem}
+.rank-progress-heading{display:flex;justify-content:space-between;gap:12px;margin-top:22px;font-size:.85rem}
+.rank-progress-heading b{white-space:nowrap;color:var(--green)}
+.rank-track{height:10px;margin:9px 0 7px;background:rgba(255,255,255,.18);border-radius:8px;overflow:hidden}
+.rank-track i{display:block;height:100%;background:var(--green);border-radius:inherit;transition:width .35s ease}
+.rank-heading{font-size:1.1rem;margin:24px 0 10px}
+.rank{list-style:none;padding:0;display:grid;gap:8px}
+.rank li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;background:var(--ink);padding:14px 16px;border-radius:var(--r);align-items:center}
+.rank li.is-current{background:var(--green);color:#04210f;font-weight:800}
+.rank li.is-earned .pos{color:var(--green);font-weight:800}
+.rank li.is-locked{opacity:.62}
+.rank .pos{opacity:.8}
+.rank li b{font-size:.85rem;white-space:nowrap}
+@media(max-width:380px){.rank-current{padding:18px}.rank li{grid-template-columns:22px minmax(0,1fr) auto;padding:12px}.rank-progress-heading{font-size:.78rem}}

@@ -1,0 +1,1 @@
+<footer class="footer">© <?= date('Y') ?> Aranhas de Marte · Todos os direitos reservados</footer>
