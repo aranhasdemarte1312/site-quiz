@@ -1,5 +1,6 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
+require __DIR__ . '/php/lib/bootstrap.php';
 
 $payload = json_decode(file_get_contents('php://input'), true);
 if (!is_array($payload)) {
@@ -144,11 +145,14 @@ $state = [
     'adminNewTheme' => !empty($rawState['adminNewTheme']),
     'adminStudyEditing' => $adminStudyEditing,
 ];
-$sessionData = isset($payload['session']) && is_array($payload['session']) ? $payload['session'] : null;
-$session = $sessionData === null ? null : [
-    'name' => isset($sessionData['name']) && is_string($sessionData['name']) ? $sessionData['name'] : '',
-    'role' => isset($sessionData['role']) && $sessionData['role'] === 'admin' ? 'admin' : 'user',
+$serverUser = app_current_user();
+$session = $serverUser === null ? null : [
+    'name' => $serverUser['name'],
+    'role' => $serverUser['role'] === 'admin' ? 'admin' : 'user',
 ];
+if ($route === 'admin' && ($session === null || $session['role'] !== 'admin')) {
+    $route = 'login';
+}
 $componentData = require __DIR__ . '/php/components/icons.php';
 $navItems = $componentData['nav'];
 $icons = $componentData['icons'];

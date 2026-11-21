@@ -87,18 +87,44 @@ App.pages.estudos = {
 
 App.pages.login = {
   mount(root) {
-    const form = root.querySelector(".question-form");
-    const error = form.querySelector(".form-error");
-    form.onsubmit = event => {
-      event.preventDefault();
-      const result = App.store.login(form.email.value, form.pass.value);
-      if (result.error) {
-        error.textContent = result.error;
-        error.hidden = false;
-        return;
-      }
-      App.go(result.session.role === "admin" ? "admin" : "inicio");
+    const forms = {
+      "login-user": root.querySelector('[data-form="login-user"]'),
+      register: root.querySelector('[data-form="register"]'),
+      "login-admin": root.querySelector('[data-form="login-admin"]'),
     };
+    const tabs = root.querySelectorAll("[data-tab]");
+    const show = name => {
+      Object.entries(forms).forEach(([key, form]) => { form.hidden = key !== name; });
+      const adminTab = name === "login-admin";
+      tabs.forEach(tab => {
+        const active = (tab.dataset.tab === "admin") === adminTab;
+        tab.classList.toggle("is-active", active);
+        tab.setAttribute("aria-selected", String(active));
+      });
+    };
+    tabs.forEach(tab => { tab.onclick = () => show(tab.dataset.tab === "admin" ? "login-admin" : "login-user"); });
+    root.querySelectorAll("[data-show]").forEach(btn => { btn.onclick = () => show(btn.dataset.show); });
+
+    const bind = (form, run, destination) => {
+      const error = form.querySelector(".form-error");
+      const submit = form.querySelector('[type="submit"]');
+      form.onsubmit = async event => {
+        event.preventDefault();
+        error.hidden = true;
+        submit.disabled = true;
+        const result = await run(form);
+        submit.disabled = false;
+        if (result.error) {
+          error.textContent = result.error;
+          error.hidden = false;
+          return;
+        }
+        App.go(destination(result.session));
+      };
+    };
+    bind(forms["login-user"], f => App.store.login(f.email.value, f.pass.value, "user"), () => "inicio");
+    bind(forms.register, f => App.store.register(f.name.value, f.email.value, f.pass.value), () => "inicio");
+    bind(forms["login-admin"], f => App.store.login(f.email.value, f.pass.value, "admin"), () => "admin");
   },
 };
 
@@ -107,7 +133,7 @@ App.pages.admin = {
     const form = root.querySelector("form");
     const error = root.querySelector(".form-error");
     const editing = App.pageState.adminEditing;
-    form.onsubmit = event => {
+    form.onsubmit = async event => {
       event.preventDefault();
       const question = form.q.value.trim();
       const options = [0, 1, 2, 3].map(index => form[`o${index}`].value.trim());
@@ -116,7 +142,14 @@ App.pages.admin = {
         error.hidden = false;
         return;
       }
-      App.store.saveQuestion({ id: editing?.id, q: question, o: options, a: Number(form.a.value) });
+      try {
+        await App.store.saveQuestion({ id: editing?.id, q: question, o: options, a: Number(form.a.value) });
+      } catch (e) {
+        error.textContent = e.message;
+        error.hidden = false;
+        if (e.status === 401 || e.status === 403) setTimeout(() => App.go("login"), 1200);
+        return;
+      }
       App.pageState.adminEditing = null;
       App.refresh();
     };
@@ -132,10 +165,16 @@ App.pages.admin = {
       };
     });
     root.querySelectorAll("[data-del]").forEach(button => {
-      button.onclick = () => {
+      button.onclick = async () => {
         const id = Number(button.dataset.del);
         if (!confirm("Excluir esta pergunta?")) return;
-        App.store.deleteQuestion(id);
+        try {
+          await App.store.deleteQuestion(id);
+        } catch (e) {
+          error.textContent = e.message;
+          error.hidden = false;
+          return;
+        }
         if (App.pageState.adminEditing?.id === id) App.pageState.adminEditing = null;
         App.refresh();
       };

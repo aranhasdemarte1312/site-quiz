@@ -1,22 +1,12 @@
-// Estado global, "banco" local (localStorage) e sessão. Troque por chamadas à API depois.
+// Estado do app. Contas e perguntas vêm do servidor (MySQL via api/*.php).
+// Apenas desempenho (acertos/erros/pontos) e estudos continuam no localStorage.
 window.App = { components: {}, pages: {} };
 
 App.esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 (() => {
-  const KEY = "quiz-v2";
-  const DEFAULT_QUESTIONS = [
-    { id: 1, q: "Qual instrumento tem teclas pretas e brancas?", o: ["Violino", "Piano", "Flauta", "Bateria"], a: 1 },
-    { id: 2, q: "Qual gênero musical é conhecido pela improvisação e pelo uso frequente de saxofone?", o: ["Blues", "Jazz", "Sertanejo", "Reggae"], a: 1 },
-    { id: 3, q: "Qual instrumento de percussão é presença marcante no samba?", o: ["Agogô", "Pandeiro", "Triângulo", "Atabaque"], a: 1 },
-    { id: 4, q: "Qual gênero costuma destacar guitarra elétrica, baixo e bateria?", o: ["Samba", "Rock", "Bossa nova", "Forró"], a: 1 },
-  ];
-  const LEGACY_DEFAULT_QUESTIONS = [
-    { id: 1, q: "Qual é a capital do Brasil?", o: ["São Paulo", "Brasília", "Rio de Janeiro", "Salvador"], a: 1 },
-    { id: 2, q: "Quanto é 7 × 8?", o: ["54", "56", "64", "48"], a: 1 },
-    { id: 3, q: "Qual planeta é conhecido como planeta vermelho?", o: ["Vênus", "Júpiter", "Marte", "Mercúrio"], a: 2 },
-    { id: 4, q: "Em que ano os portugueses chegaram ao Brasil?", o: ["1492", "1500", "1530", "1822"], a: 1 },
-  ];
+  const KEY = "quiz-v3";
+  const PTS = 260;
   const DEFAULT_STUDIES = [
     {
       id: 101,
@@ -43,62 +33,95 @@ App.esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", 
       ],
     },
   ];
-  // Login de demonstração (somente front-end, NÃO é seguro)
-  const ADMIN = { email: "admin@quiz.com", pass: "admin123" };
-  const PTS = 260;
 
-  let data = { ok: 0, err: 0, points: 0, questions: DEFAULT_QUESTIONS, studies: DEFAULT_STUDIES, session: null };
-  let migratedQuestions = false;
-  let migratedStudies = false;
+  let data = { ok: 0, err: 0, points: 0, studies: DEFAULT_STUDIES };
   try {
-    const saved = JSON.parse(localStorage.getItem(KEY)) || {};
-    Object.assign(data, saved);
-    if (JSON.stringify(saved.questions) === JSON.stringify(LEGACY_DEFAULT_QUESTIONS)) {
-      data.questions = DEFAULT_QUESTIONS;
-      migratedQuestions = true;
-    }
-    if (!Array.isArray(saved.studies)) {
-      data.studies = DEFAULT_STUDIES;
-      migratedStudies = true;
-    }
+    const saved = JSON.parse(localStorage.getItem(KEY) || localStorage.getItem("quiz-v2")) || {};
+    for (const k of ["ok", "err", "points"]) if (Number.isFinite(saved[k])) data[k] = saved[k];
+    if (Array.isArray(saved.studies)) data.studies = saved.studies;
   } catch (e) {}
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {} };
-  if (migratedQuestions || migratedStudies) save();
+  save();
+
+  // Estado vindo do servidor (nunca persistido no navegador)
+  let session = null;
+  let csrf = "";
+  let questions = [];
+
+  async function api(url, { method = "GET", body } = {}) {
+    const headers = { "Content-Type": "application/json" };
+    if (csrf) headers["X-CSRF-Token"] = csrf;
+    let res;
+    try {
+      res = await fetch(url, { method, headers, credentials: "same-origin", body: body === undefined ? undefined : JSON.stringify(body) });
+    } catch (e) {
+      throw new Error("Não foi possível conectar ao servidor.");
+    }
+    let json = {};
+    try { json = await res.json(); } catch (e) {}
+    if (!res.ok) {
+      const err = new Error(json.error || "Erro ao falar com o servidor.");
+      err.status = res.status;
+      throw err;
+    }
+    return json;
+  }
+  const applyAuth = r => { session = r.user || null; if (r.csrf) csrf = r.csrf; };
 
   App.store = {
     PTS,
-    ADMIN_EMAIL: ADMIN.email, ADMIN_PASS: ADMIN.pass,
-    get questions() { return data.questions; },
+    get questions() { return questions; },
     get studies() { return data.studies; },
     get stats() { return { ok: data.ok, err: data.err, points: data.points }; },
-    get session() { return data.session; },
-    get isAdmin() { return data.session?.role === "admin"; },
+    get session() { return session; },
+    get isAdmin() { return session?.role === "admin"; },
 
-    login(email, pass) {
+    // Carrega sessão e perguntas do servidor
+    async init() {
+      try { applyAuth(await api("api/auth.php?action=me")); } catch (e) { console.error(e); }
+      await this.loadQuestions();
+    },
+    async loadQuestions() {
+      try { questions = (await api("api/questions.php")).questions; }
+      catch (e) { console.error(e); questions = []; }
+      return questions;
+    },
+
+    // Autenticação — retorna { session } ou { error }
+    async login(email, pass, as = "user") {
       email = email.trim().toLowerCase();
       if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Digite um e-mail válido." };
-      if (pass.length < 4) return { error: "A senha precisa ter pelo menos 4 caracteres." };
-      if (email === ADMIN.email) {
-        if (pass !== ADMIN.pass) return { error: "E-mail ou senha incorretos." };
-        data.session = { name: "Admin", email, role: "admin" };
-      } else {
-        const n = email.split("@")[0];
-        data.session = { name: n[0].toUpperCase() + n.slice(1), email, role: "user" };
-      }
-      save(); return { session: data.session };
+      if (!pass) return { error: "Digite sua senha." };
+      try { applyAuth(await api("api/auth.php?action=login", { method: "POST", body: { email, pass, as } })); return { session }; }
+      catch (e) { return { error: e.message }; }
     },
-    logout() { data.session = null; save(); },
+    async register(name, email, pass) {
+      name = name.trim(); email = email.trim().toLowerCase();
+      if (!name) return { error: "Informe seu nome." };
+      if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Digite um e-mail válido." };
+      if (pass.length < 8) return { error: "A senha precisa ter pelo menos 8 caracteres." };
+      try { applyAuth(await api("api/auth.php?action=register", { method: "POST", body: { name, email, pass } })); return { session }; }
+      catch (e) { return { error: e.message }; }
+    },
+    async logout() {
+      try { applyAuth(await api("api/auth.php?action=logout", { method: "POST", body: {} })); }
+      catch (e) { session = null; }
+    },
 
     addResult(ok, err) { data.ok += ok; data.err += err; data.points += ok * PTS; save(); },
     resetStats() { data.ok = data.err = data.points = 0; save(); },
 
-    saveQuestion(q) {
-      const i = data.questions.findIndex(x => x.id === q.id);
-      if (i >= 0) data.questions[i] = q;
-      else data.questions.push({ ...q, id: Date.now() });
-      save();
+    // CRUD de perguntas (admin) — lançam Error com a mensagem do servidor
+    async saveQuestion(q) {
+      const body = { q: q.q, o: q.o, a: q.a };
+      if (q.id) await api("api/questions.php?id=" + encodeURIComponent(q.id), { method: "PUT", body });
+      else await api("api/questions.php", { method: "POST", body });
+      await this.loadQuestions();
     },
-    deleteQuestion(id) { data.questions = data.questions.filter(q => q.id !== id); save(); },
+    async deleteQuestion(id) {
+      await api("api/questions.php?id=" + encodeURIComponent(id), { method: "DELETE" });
+      await this.loadQuestions();
+    },
 
     saveTheme(theme) {
       const current = data.studies.find(item => item.id === theme.id);
