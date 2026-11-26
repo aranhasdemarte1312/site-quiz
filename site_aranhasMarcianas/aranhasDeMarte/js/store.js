@@ -108,7 +108,13 @@ App.esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", 
       catch (e) { session = null; }
     },
 
-    addResult(ok, err) { data.ok += ok; data.err += err; data.points += ok * PTS; save(); },
+    addResult(ok, err) {
+      data.ok += ok; data.err += err; data.points += ok * PTS; save();
+      // Jogadores logados também somam no ranking do banco (falha de rede não trava o quiz)
+      if (session?.role === "user") {
+        api("api/ranking.php", { method: "POST", body: { ok, err } }).catch(e => console.error(e));
+      }
+    },
     resetStats() { data.ok = data.err = data.points = 0; save(); },
 
     // CRUD de perguntas (admin) — lançam Error com a mensagem do servidor

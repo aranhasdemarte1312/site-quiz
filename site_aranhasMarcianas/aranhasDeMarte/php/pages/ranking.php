@@ -46,6 +46,29 @@ $progress = $nextLevel
       </li>
     <?php endforeach; ?>
   </ol>
+  <h2 class="rank-heading">Classificação geral</h2>
+  <?php if (!empty($state['leaderboardError'])): ?>
+    <p class="rank-progress-note">Não foi possível carregar a classificação agora.</p>
+  <?php elseif (empty($state['leaderboard'])): ?>
+    <p class="rank-progress-note">Ninguém pontuou ainda. Entre com sua conta e jogue para aparecer aqui.</p>
+  <?php else: ?>
+    <div class="board-wrap">
+      <table class="board">
+        <thead><tr><th>#</th><th>Jogador</th><th>Pontos</th><th>Acertos</th><th>Erros</th></tr></thead>
+        <tbody>
+          <?php foreach ($state['leaderboard'] as $i => $row): ?>
+            <tr<?= ($state['meName'] ?? null) === $row['name'] ? ' class="is-me"' : '' ?>>
+              <td><?= $i + 1 ?></td>
+              <td><?= app_escape($row['name']) ?></td>
+              <td><?= number_format((int) $row['points'], 0, ',', '.') ?></td>
+              <td><?= (int) $row['correct'] ?></td>
+              <td><?= (int) $row['errors'] ?></td>
+            </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  <?php endif; ?>
   <div class="actions">
     <button class="btn dark" data-go="perfil">Ver desempenho</button>
     <button class="btn green" data-start>Jogar agora</button>

@@ -17,3 +17,12 @@
 .rank .pos{opacity:.8}
 .rank li b{font-size:.85rem;white-space:nowrap}
 @media(max-width:380px){.rank-current{padding:18px}.rank li{grid-template-columns:22px minmax(0,1fr) auto;padding:12px}.rank-progress-heading{font-size:.78rem}}
+.board-wrap{overflow-x:auto}
+.board{width:100%;border-collapse:collapse;font-size:.9rem}
+.board th,.board td{padding:10px 12px;text-align:right;white-space:nowrap}
+.board th:nth-child(2),.board td:nth-child(2){text-align:left;width:100%}
+.board th:first-child,.board td:first-child{text-align:center}
+.board thead th{font-size:.75rem;text-transform:uppercase;color:var(--muted)}
+.board tbody tr{background:var(--ink)}
+.board tbody tr+tr td{border-top:1px solid rgba(255,255,255,.08)}
+.board tr.is-me{background:var(--green);color:#04210f;font-weight:800}

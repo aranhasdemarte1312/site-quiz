@@ -29,6 +29,7 @@ try {
         $stmt = app_db()->prepare('SELECT id, name, email, password_hash, role FROM users WHERE email = ?');
         $stmt->execute([$email]);
         $row = $stmt->fetch();
+        // Sempre executa um verify (hash falso se o e-mail não existe) para não revelar quais e-mails existem.
         $hash = $row['password_hash'] ?? password_hash('dummy', PASSWORD_DEFAULT);
         $ok = password_verify($pass, $hash) && $row;
         if (!$ok) {

@@ -145,14 +145,33 @@ $state = [
     'adminNewTheme' => !empty($rawState['adminNewTheme']),
     'adminStudyEditing' => $adminStudyEditing,
 ];
+// A sessão vem do servidor (cookie), nunca do corpo da requisição.
 $serverUser = app_current_user();
 $session = $serverUser === null ? null : [
     'name' => $serverUser['name'],
     'role' => $serverUser['role'] === 'admin' ? 'admin' : 'user',
 ];
+// Rota do admin protegida também no servidor.
 if ($route === 'admin' && ($session === null || $session['role'] !== 'admin')) {
     $route = 'login';
 }
+// Ranking geral vem direto do banco (nunca do estado enviado pelo navegador).
+$state['leaderboard'] = [];
+$state['leaderboardError'] = false;
+if ($route === 'ranking') {
+    try {
+        $state['leaderboard'] = app_db()->query(
+            'SELECT u.name, r.points, r.correct, r.errors
+               FROM ranking r JOIN users u ON u.id = r.user_id
+              ORDER BY r.points DESC, r.correct DESC, r.errors ASC, u.name ASC
+              LIMIT 20'
+        )->fetchAll();
+    } catch (Throwable $e) {
+        error_log($e->getMessage());
+        $state['leaderboardError'] = true;
+    }
+}
+$state['meName'] = $session['name'] ?? null;
 $componentData = require __DIR__ . '/php/components/icons.php';
 $navItems = $componentData['nav'];
 $icons = $componentData['icons'];

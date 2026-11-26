@@ -33,6 +33,7 @@ function app_session_start(): void
     session_start();
 }
 
+/** Usuário logado (ou null). Sempre vem da sessão do servidor. */
 function app_current_user(): ?array
 {
     app_session_start();
@@ -63,6 +64,7 @@ function app_body(): array
     return is_array($data) ? $data : [];
 }
 
+/** Exige admin logado + token CSRF válido (para qualquer escrita). */
 function app_require_admin(): array
 {
     $user = app_current_user();
@@ -71,6 +73,20 @@ function app_require_admin(): array
     }
     if ($user['role'] !== 'admin') {
         app_json(['error' => 'Acesso restrito ao administrador.'], 403);
+    }
+    $sent = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+    if (!hash_equals(app_csrf_token(), (string) $sent)) {
+        app_json(['error' => 'Sessão expirada. Recarregue a página.'], 419);
+    }
+    return $user;
+}
+
+/** Exige usuário comum logado + token CSRF válido. */
+function app_require_user(): array
+{
+    $user = app_current_user();
+    if ($user === null) {
+        app_json(['error' => 'Faça login para continuar.'], 401);
     }
     $sent = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
     if (!hash_equals(app_csrf_token(), (string) $sent)) {

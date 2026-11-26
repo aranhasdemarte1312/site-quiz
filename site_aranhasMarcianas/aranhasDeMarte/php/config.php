@@ -1,4 +1,6 @@
 <?php
+// Credenciais do banco. Padrão do XAMPP: usuário root, sem senha.
+// Em produção, use um usuário dedicado com senha forte (ou variáveis de ambiente).
 return [
     'db_host' => getenv('QUIZ_DB_HOST') ?: '127.0.0.1',
     'db_name' => getenv('QUIZ_DB_NAME') ?: 'quiz_musical',

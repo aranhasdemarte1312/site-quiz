@@ -32,6 +32,19 @@ CREATE TABLE IF NOT EXISTS questions (
   CONSTRAINT fk_questions_user FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS ranking (
+  id         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id    INT UNSIGNED NOT NULL,
+  points     INT UNSIGNED NOT NULL DEFAULT 0,
+  correct    INT UNSIGNED NOT NULL DEFAULT 0,
+  errors     INT UNSIGNED NOT NULL DEFAULT 0,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_ranking_user (user_id),
+  KEY idx_ranking_points (points),
+  CONSTRAINT fk_ranking_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 INSERT INTO questions (statement, option_a, option_b, option_c, option_d, correct_option)
 SELECT * FROM (
   SELECT 'Qual instrumento tem teclas pretas e brancas?' AS s, 'Violino' AS a, 'Piano' AS b, 'Flauta' AS c, 'Bateria' AS d, 1 AS k
@@ -40,3 +53,4 @@ SELECT * FROM (
   UNION ALL SELECT 'Qual gênero costuma destacar guitarra elétrica, baixo e bateria?', 'Samba', 'Rock', 'Bossa nova', 'Forró', 1
 ) seed
 WHERE NOT EXISTS (SELECT 1 FROM questions);
+-- O administrador é criado pelo script setup_admin.php (a senha não fica no SQL).

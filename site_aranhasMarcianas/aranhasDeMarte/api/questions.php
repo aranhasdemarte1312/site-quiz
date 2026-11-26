@@ -11,6 +11,7 @@ function row_to_question(array $r): array
     ];
 }
 
+/** Valida o corpo e devolve [statement, a, b, c, d, correct]. */
 function parse_question(array $in): array
 {
     $q = trim((string) ($in['q'] ?? ''));
@@ -39,11 +40,13 @@ try {
     $db = app_db();
     $method = $_SERVER['REQUEST_METHOD'];
 
+    // READ — público (o quiz precisa das perguntas)
     if ($method === 'GET') {
         $rows = $db->query('SELECT * FROM questions ORDER BY id')->fetchAll();
         app_json(['questions' => array_map('row_to_question', $rows)]);
     }
 
+    // CREATE / UPDATE / DELETE — somente administrador
     $admin = app_require_admin();
 
     if ($method === 'POST') {
