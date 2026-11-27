@@ -1,3 +1,16 @@
+<?php
+/*
+DECLARAÇÃO DE USO DE INTELIGÊNCIA ARTIFICIAL
+
+Ferramenta: Claude, Copilot
+Etapa: Desenvolvimento
+Finalidade: Auxílio no coding em php e identificação de seções por comentários
+
+Validação: Código analisado, corrigido e testado pelo aluno.
+*/
+
+?>
+
 <section class="view login-view"><h1>Entrar</h1>
   <div class="tabs" role="tablist" aria-label="Tipo de acesso">
     <button type="button" class="tab is-active" role="tab" aria-selected="true" data-tab="user">Jogador</button>

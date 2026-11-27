@@ -1,4 +1,14 @@
 <?php
+/*
+DECLARAÇÃO DE USO DE INTELIGÊNCIA ARTIFICIAL
+
+Ferramenta: Claude, Copilot
+Etapa: Desenvolvimento
+Finalidade: Auxílio no coding em php e identificação de seções por comentários
+
+Validação: Código analisado, corrigido e testado pelo aluno.
+*/
+
 $componentData = require __DIR__ . '/php/components/icons.php';
 $navItems = $componentData['nav'];
 $icons = $componentData['icons'];

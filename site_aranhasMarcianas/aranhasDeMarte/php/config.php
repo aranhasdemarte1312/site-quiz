@@ -1,4 +1,14 @@
 <?php
+/*
+DECLARAÇÃO DE USO DE INTELIGÊNCIA ARTIFICIAL
+
+Ferramenta: Claude, Copilot
+Etapa: Desenvolvimento
+Finalidade: Auxílio no coding em php e identificação de seções por comentários
+
+Validação: Código analisado, corrigido e testado pelo aluno.
+*/
+
 // Credenciais do banco. Padrão do XAMPP: usuário root, sem senha.
 // Em produção, use um usuário dedicado com senha forte (ou variáveis de ambiente).
 return [

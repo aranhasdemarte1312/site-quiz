@@ -1,4 +1,14 @@
 <?php
+/*
+DECLARAÇÃO DE USO DE INTELIGÊNCIA ARTIFICIAL
+
+Ferramenta: Claude, Copilot
+Etapa: Desenvolvimento
+Finalidade: Auxílio no coding em php e identificação de seções por comentários
+
+Validação: Código analisado, corrigido e testado pelo aluno.
+*/
+
 header('Content-Type: application/json; charset=utf-8');
 require __DIR__ . '/php/lib/bootstrap.php';
 

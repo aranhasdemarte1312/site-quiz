@@ -1,4 +1,15 @@
 <?php
+/*
+DECLARAÇÃO DE USO DE INTELIGÊNCIA ARTIFICIAL
+
+Ferramenta: Claude, Copilot
+Etapa: Desenvolvimento
+Finalidade: Auxílio no coding em php e identificação de seções por comentários
+
+Validação: Código analisado, corrigido e testado pelo aluno.
+*/
+
+$state = $state ?? [];
 $quiz = $state['quiz'];
 $questions = $quiz['questions'];
 $index = $quiz['index'];
