@@ -28,6 +28,6 @@
 .review-editor legend{font-weight:700;margin-bottom:8px}
 .review-editor-option{display:grid;grid-template-columns:20px minmax(0,1fr);align-items:center;gap:8px}
 .review-editor-option input[type=radio]{accent-color:var(--green)}
-.review-editor-option .field-input{width:100%;min-width:0}
+.review-editor-option .field-input{color:black;width:100%;min-width:0}
 @media(min-width:700px){.study-manager{grid-template-columns:minmax(240px,.8fr) minmax(0,1.2fr)}.study-form-grid{grid-template-columns:1fr 1fr}}
 @media (min-width:900px){.admin-grid{grid-template-columns:1fr 1fr;align-items:start}}
