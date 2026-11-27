@@ -6,9 +6,10 @@ $name = $session['name'] ?? 'Visitante';
 <section class="view">
   <p class="eyebrow">Boas-vindas</p>
   <h1>Oi, <?= app_escape($name) ?></h1>
-  <p class="lead">Explore gêneros, reconheça instrumentos e conquiste seu lugar na trilha sonora.</p>
+  <p class="lead">Explore gêneros, reconheça instrumentos e prove seu conhecimento na música.</p>
   <ul class="info">
-    <li><span>Questionário</span><b><?= count($state['questions']) ?> perguntas</b></li>
+    <li><span>Total de questões por tentativa</span><b>10 questões</b></li>
+    <li><span>Total de perguntas adicionadas</span><b><?= count($state['questions']) ?> perguntas</b></li>
     <li><span>Desempenho</span><b><?= $total ? app_escape($stats['err'] . ' erros, ' . $stats['ok'] . ' acertos') : 'Sem respostas ainda' ?></b></li>
     <li><span>Sua jornada</span><b><?= number_format($stats['points'], 0, ',', '.') ?> pontos</b></li>
   </ul>
