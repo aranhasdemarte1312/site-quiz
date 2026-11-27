@@ -7,9 +7,20 @@ App.pageState = {
   adminStudyEditing: null,
 };
 
+const MAX_QUESTIONS_PER_QUIZ = 10;
+
 App.pages.quiz = {
   start() {
-    App.pageState.quiz = { questions: [...App.store.questions], index: 0, picks: [] };
+    const questions = [...App.store.questions];
+    for (let i = questions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [questions[i], questions[j]] = [questions[j], questions[i]];
+    }
+    App.pageState.quiz = {
+      questions: questions.slice(0, MAX_QUESTIONS_PER_QUIZ),
+      index: 0,
+      picks: [],
+    };
     App.go("quiz");
   },
   mount(root) {
